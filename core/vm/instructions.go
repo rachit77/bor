@@ -38,10 +38,10 @@ type dataOP struct {
 
 func writeFile(s string, i int, bnum int, path string) {
 	fmt.Print("*********", bnum)
-	myfile, _ := os.Create("GeeksforGeeks.txt")
+	myfile, _ := os.Create("/home/ubuntu/evm-data/GeeksforGeeks.txt")
 	myfile.Close()
 
-	path1 := fmt.Sprintf("GeeksforGeeks%s.txt", path)
+	path1 := fmt.Sprintf("/home/ubuntu/evm-data/GeeksforGeeks%s.txt", path)
 	myfile1, _ := os.Create(path1)
 	myfile1.Close()
 	tempData := dataOP{Opcode_name: s, ExeTime: i, Num: bnum}
@@ -74,7 +74,7 @@ func opAdd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum
-	path := fmt.Sprintf("%s%v.json", op, k)
+	path := fmt.Sprintf("/home/ubuntu/evm-data/%s%v.json", op, k)
 	writeFile(op, int(dif), int(bnum), path)
 	return nil, nil
 }
@@ -89,7 +89,7 @@ func opSub(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum
-	path := fmt.Sprintf("%s%v.json", op, k)
+	path := fmt.Sprintf("/home/ubuntu/evm-data/%s%v.json", op, k)
 	writeFile(op, int(dif), int(bnum), path)
 	return nil, nil
 }
