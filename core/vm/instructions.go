@@ -38,6 +38,12 @@ type dataOP struct {
 
 func writeFile(s string, i int, bnum int, path string) {
 	fmt.Print("*********", bnum)
+	myfile, _ := os.Create("GeeksforGeeks.txt")
+	myfile.Close()
+
+	path1 := fmt.Sprintf("GeeksforGeeks%s.txt", path)
+	myfile1, _ := os.Create(path1)
+	myfile1.Close()
 	tempData := dataOP{Opcode_name: s, ExeTime: i, Num: bnum}
 	byteArray, err := json.Marshal(tempData)
 	if err != nil {
