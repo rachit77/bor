@@ -1028,7 +1028,7 @@ func opMload(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	offset := int64(v.Uint64())
 	v.SetBytes(scope.Memory.GetPtr(offset, 32))
 	var endTime = time.Now().UnixNano()
-	leng := len(scope.Stack.peek())
+	leng := 0
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum / 500000
@@ -1045,8 +1045,9 @@ func opMstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	mStart, val := scope.Stack.pop(), scope.Stack.pop()
 	scope.Memory.Set32(mStart.Uint64(), &val)
 	var endTime = time.Now().UnixNano()
-	leng := len(val)
+
 	var dif = endTime - startTime
+	leng := 0
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum / 500000
 	path := fmt.Sprintf("/home/ubuntu/data-evm/%v.json", k)
@@ -1060,8 +1061,9 @@ func opMstore8(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 	off, val := scope.Stack.pop(), scope.Stack.pop()
 	scope.Memory.store[off.Uint64()] = byte(val.Uint64())
 	var endTime = time.Now().UnixNano()
-	leng := len(val)
+
 	var dif = endTime - startTime
+	leng := 0
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum / 500000
 	path := fmt.Sprintf("/home/ubuntu/data-evm/%v.json", k)
@@ -1077,8 +1079,9 @@ func opSload(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	val := interpreter.evm.StateDB.GetState(scope.Contract.Address(), hash)
 	loc.SetBytes(val.Bytes())
 	var endTime = time.Now().UnixNano()
-	leng := len(scope.Stack.peek())
+
 	var dif = endTime - startTime
+	leng := 0
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum / 500000
 	path := fmt.Sprintf("/home/ubuntu/data-evm/%v.json", k)
@@ -1096,7 +1099,7 @@ func opSstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var endTime = time.Now().UnixNano()
 
 	var dif = endTime - startTime
-	leng := len(scope.Stack.peek())
+	leng := 0
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 	k := bnum / 500000
 	path := fmt.Sprintf("/home/ubuntu/data-evm/%v.json", k)
