@@ -1594,8 +1594,8 @@ func opSuicide(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 // make log instruction function
 func makeLog(size int) executionFunc {
 	op := fmt.Sprintf("Log%v", size)
-	siz := DirSize()
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
+		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		topics := make([]common.Hash, size)
 		stack := scope.Stack
@@ -1654,8 +1654,8 @@ func opPush1(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 // make push instruction function
 func makePush(size uint64, pushByteSize int) executionFunc {
 	op := fmt.Sprintf("Push%v", size)
-	siz := DirSize()
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
+		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		codeLen := len(scope.Contract.Code)
 
@@ -1688,8 +1688,8 @@ func makePush(size uint64, pushByteSize int) executionFunc {
 // make dup instruction function
 func makeDup(size int64) executionFunc {
 	op := fmt.Sprintf("Dup%v", size)
-	siz := DirSize()
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
+		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		scope.Stack.dup(int(size))
 		var endTime = time.Now().UnixNano()
@@ -1707,9 +1707,10 @@ func makeDup(size int64) executionFunc {
 func makeSwap(size int64) executionFunc {
 	// switch n + 1 otherwise n would be swapped with n
 	op := fmt.Sprintf("Swap%v", size)
-	siz := DirSize()
+
 	size++
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
+		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		scope.Stack.swap(int(size))
 		var endTime = time.Now().UnixNano()
