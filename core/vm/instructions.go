@@ -31,21 +31,27 @@ import (
 )
 
 type dataOP struct {
-	Block_no int    `json:"block_no"`
-	Opcode   string `json:"opcode"`
-	ExeTime  int    `json:"exeTime"`
-	Load     uint64 `json:"load"`
+	B int    `json:"b"`
+	O string `json:"o"`
+	E int    `json:"e"`
+	L uint   `json:"l"`
 }
 
-func writeFile(s string, i int, bnum int, siz uint64) {
+var siz uint = 0
+
+func writeFile(s string, i int, bnum int) {
+
+	if bnum%10000 == 0 {
+		siz = DirSize()
+	}
 
 	dt := time.Now()
+	d := dt.Format("01-02")
+	h := dt.Hour()
+	m := dt.Minute() / 5
+	path := fmt.Sprintf("/home/ubuntu/data-evm/%s/%v/%v.json", d, h, m)
 
-	// Format HH-MM-DD
-	k := dt.Format("15-01-02")
-
-	path := fmt.Sprintf("/home/ubuntu/data-evm/%s.json", k)
-	tempData := dataOP{Block_no: bnum, Opcode: s, ExeTime: i, Load: siz}
+	tempData := dataOP{B: bnum, O: s, E: i, L: siz}
 	byteArray, err := json.Marshal(tempData)
 	if err != nil {
 		fmt.Println(err)
@@ -63,7 +69,7 @@ func writeFile(s string, i int, bnum int, siz uint64) {
 
 }
 
-func DirSize() uint64 {
+func DirSize() uint {
 	path := "/home/ubuntu/.bor/data/bor/chaindata"
 	var size uint64
 	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
@@ -78,12 +84,12 @@ func DirSize() uint64 {
 	if err != nil {
 		fmt.Print(err)
 	}
-	return size / 1024
+	t := size / 1024
+	return uint(t)
 }
 
 func opAdd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Add"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -94,13 +100,12 @@ func opAdd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSub(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Sub"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -109,13 +114,12 @@ func opSub(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMul(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Mul"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -126,13 +130,12 @@ func opMul(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opDiv(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Div"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -143,13 +146,12 @@ func opDiv(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSdiv(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Sdiv"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -160,13 +162,12 @@ func opSdiv(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Mod"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -176,13 +177,12 @@ func opMod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Smod"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -192,13 +192,12 @@ func opSmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opExp(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Exp"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	base, exponent := scope.Stack.pop(), scope.Stack.peek()
@@ -208,13 +207,12 @@ func opExp(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSignExtend(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "SignExtend"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	back, num := scope.Stack.pop(), scope.Stack.peek()
@@ -224,13 +222,12 @@ func opSignExtend(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opNot(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Not"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x := scope.Stack.peek()
@@ -240,13 +237,12 @@ func opNot(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opLt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Lt"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -260,13 +256,12 @@ func opLt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte,
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opGt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Gt"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -280,13 +275,12 @@ func opGt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte,
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSlt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Slt"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -300,13 +294,12 @@ func opSlt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSgt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Sgt"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -320,13 +313,12 @@ func opSgt(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opEq(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Eq"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -340,13 +332,12 @@ func opEq(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte,
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opIszero(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Iszero"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x := scope.Stack.peek()
@@ -360,13 +351,12 @@ func opIszero(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opAnd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "And"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -376,13 +366,12 @@ func opAnd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opOr(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Or"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -392,13 +381,12 @@ func opOr(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte,
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opXor(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Xor"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y := scope.Stack.pop(), scope.Stack.peek()
@@ -408,13 +396,12 @@ func opXor(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opByte(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Byte"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	th, val := scope.Stack.pop(), scope.Stack.peek()
@@ -424,13 +411,12 @@ func opByte(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opAddmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Addmod"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y, z := scope.Stack.pop(), scope.Stack.pop(), scope.Stack.peek()
@@ -444,13 +430,12 @@ func opAddmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMulmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Mulmod"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	x, y, z := scope.Stack.pop(), scope.Stack.pop(), scope.Stack.peek()
@@ -460,7 +445,7 @@ func opMulmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
@@ -470,7 +455,6 @@ func opMulmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 func opSHL(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	// Note, second operand is left in the stack; accumulate result into it, and no need to push it afterwards
 	op := "SHL"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	shift, value := scope.Stack.pop(), scope.Stack.peek()
@@ -483,7 +467,7 @@ func opSHL(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
@@ -493,7 +477,6 @@ func opSHL(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 func opSHR(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	// Note, second operand is left in the stack; accumulate result into it, and no need to push it afterwards
 	op := "SHR"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	shift, value := scope.Stack.pop(), scope.Stack.peek()
@@ -507,7 +490,7 @@ func opSHR(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
@@ -516,7 +499,6 @@ func opSHR(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 // and pushes on the stack arg2 shifted to the right by arg1 number of bits with sign extension.
 func opSAR(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "SAR"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	shift, value := scope.Stack.pop(), scope.Stack.peek()
@@ -536,13 +518,12 @@ func opSAR(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSha3(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Sha3"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	offset, size := scope.Stack.pop(), scope.Stack.peek()
@@ -567,12 +548,11 @@ func opSha3(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 func opAddress(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Address"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetBytes(scope.Contract.Address().Bytes()))
@@ -581,13 +561,12 @@ func opAddress(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opBalance(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Balance"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	slot := scope.Stack.peek()
@@ -599,13 +578,12 @@ func opBalance(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opOrigin(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Origin"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetBytes(interpreter.evm.Origin.Bytes()))
 	var endTime = time.Now().UnixNano()
@@ -613,12 +591,11 @@ func opOrigin(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 func opCaller(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Caller"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetBytes(scope.Contract.Caller().Bytes()))
 	var endTime = time.Now().UnixNano()
@@ -626,13 +603,12 @@ func opCaller(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCallValue(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CallValue"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	v, _ := uint256.FromBig(scope.Contract.value)
 	scope.Stack.push(v)
@@ -641,13 +617,12 @@ func opCallValue(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) (
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCallDataLoad(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CallDataLoad"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	x := scope.Stack.peek()
 	if offset, overflow := x.Uint64WithOverflow(); !overflow {
@@ -661,13 +636,12 @@ func opCallDataLoad(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCallDataSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CallDataSize"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetUint64(uint64(len(scope.Contract.Input))))
 	var endTime = time.Now().UnixNano()
@@ -675,13 +649,12 @@ func opCallDataSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCallDataCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CallDataCopy"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		memOffset  = scope.Stack.pop()
@@ -702,14 +675,13 @@ func opCallDataCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 
 	return nil, nil
 }
 
 func opReturnDataSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "ReturnDataSize"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetUint64(uint64(len(interpreter.returnData))))
 	var endTime = time.Now().UnixNano()
@@ -717,13 +689,12 @@ func opReturnDataSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeConte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opReturnDataCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "ReturnDataCopy"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		memOffset  = scope.Stack.pop()
@@ -749,13 +720,12 @@ func opReturnDataCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeConte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opExtCodeSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "ExtCodeSize"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	slot := scope.Stack.peek()
 	slot.SetUint64(uint64(interpreter.evm.StateDB.GetCodeSize(slot.Bytes20())))
@@ -764,13 +734,12 @@ func opExtCodeSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCodeSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CodeSize"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	l := new(uint256.Int)
 	l.SetUint64(uint64(len(scope.Contract.Code)))
@@ -780,13 +749,12 @@ func opCodeSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CodeCopy"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		memOffset  = scope.Stack.pop()
@@ -805,14 +773,13 @@ func opCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 
 	return nil, nil
 }
 
 func opExtCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "ExtCodeCopy"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		stack      = scope.Stack
@@ -834,7 +801,7 @@ func opExtCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 
 	return nil, nil
 }
@@ -867,7 +834,6 @@ func opExtCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 // this account should be regarded as a non-existent account and zero should be returned.
 func opExtCodeHash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "ExtCodeHash"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	slot := scope.Stack.peek()
 	address := common.Address(slot.Bytes20())
@@ -882,13 +848,12 @@ func opExtCodeHash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opGasprice(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Gasprice"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	v, _ := uint256.FromBig(interpreter.evm.GasPrice)
 	scope.Stack.push(v)
@@ -897,13 +862,12 @@ func opGasprice(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opBlockhash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Blockhash"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	num := scope.Stack.peek()
 	num64, overflow := num.Uint64WithOverflow()
@@ -928,13 +892,12 @@ func opBlockhash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) (
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCoinbase(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Coinbase"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetBytes(interpreter.evm.Context.Coinbase.Bytes()))
 	var endTime = time.Now().UnixNano()
@@ -942,13 +905,12 @@ func opCoinbase(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opTimestamp(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Timestamp"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	v, _ := uint256.FromBig(interpreter.evm.Context.Time)
 	scope.Stack.push(v)
@@ -957,13 +919,12 @@ func opTimestamp(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) (
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opNumber(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Number"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	v, _ := uint256.FromBig(interpreter.evm.Context.BlockNumber)
 	scope.Stack.push(v)
@@ -972,13 +933,12 @@ func opNumber(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opDifficulty(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Difficulty"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	v, _ := uint256.FromBig(interpreter.evm.Context.Difficulty)
 	scope.Stack.push(v)
@@ -987,13 +947,12 @@ func opDifficulty(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opGasLimit(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "GasLimit"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetUint64(interpreter.evm.Context.GasLimit))
 	var endTime = time.Now().UnixNano()
@@ -1001,13 +960,12 @@ func opGasLimit(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opPop(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Pop"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.pop()
 	var endTime = time.Now().UnixNano()
@@ -1015,13 +973,12 @@ func opPop(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMload(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Mload"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	v := scope.Stack.peek()
 	offset := int64(v.Uint64())
@@ -1030,13 +987,12 @@ func opMload(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Mstore"
-	siz := DirSize()
 
 	var startTime = time.Now().UnixNano()
 	// pop value of the stack
@@ -1047,13 +1003,12 @@ func opMstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMstore8(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Mstore8"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	off, val := scope.Stack.pop(), scope.Stack.pop()
 	scope.Memory.store[off.Uint64()] = byte(val.Uint64())
@@ -1062,13 +1017,12 @@ func opMstore8(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSload(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Sload"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	loc := scope.Stack.peek()
 	hash := common.Hash(loc.Bytes32())
@@ -1079,13 +1033,12 @@ func opSload(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Sstore"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	loc := scope.Stack.pop()
 	val := scope.Stack.pop()
@@ -1096,13 +1049,12 @@ func opSstore(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opJump(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Jump"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	pos := scope.Stack.pop()
 	if !scope.Contract.validJumpdest(&pos) {
@@ -1114,13 +1066,12 @@ func opJump(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opJumpi(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Jumpi"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	pos, cond := scope.Stack.pop(), scope.Stack.pop()
 	if !cond.IsZero() {
@@ -1136,26 +1087,24 @@ func opJumpi(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opJumpdest(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Jumpdest"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var endTime = time.Now().UnixNano()
 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opPc(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Pc"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetUint64(*pc))
 	var endTime = time.Now().UnixNano()
@@ -1163,13 +1112,12 @@ func opPc(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte,
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opMsize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Msize"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetUint64(uint64(scope.Memory.Len())))
 	var endTime = time.Now().UnixNano()
@@ -1177,13 +1125,12 @@ func opMsize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opGas(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Gas"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	scope.Stack.push(new(uint256.Int).SetUint64(scope.Contract.Gas))
 	var endTime = time.Now().UnixNano()
@@ -1191,13 +1138,12 @@ func opGas(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCreate(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Create"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		value        = scope.Stack.pop()
@@ -1242,13 +1188,12 @@ func opCreate(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCreate2(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Create2"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		endowment    = scope.Stack.pop()
@@ -1288,13 +1233,12 @@ func opCreate2(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Call"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	stack := scope.Stack
 	// Pop gas. The actual gas in interpreter.evm.callGasTemp.
@@ -1335,13 +1279,12 @@ func opCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return ret, nil
 }
 
 func opCallCode(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "CallCode"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
 	stack := scope.Stack
@@ -1379,13 +1322,12 @@ func opCallCode(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return ret, nil
 }
 
 func opDelegateCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "DelegateCall"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	stack := scope.Stack
 	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
@@ -1416,13 +1358,12 @@ func opDelegateCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return ret, nil
 }
 
 func opStaticCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "StaticCall"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
 	stack := scope.Stack
@@ -1453,13 +1394,12 @@ func opStaticCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return ret, nil
 }
 
 func opReturn(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Return"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	offset, size := scope.Stack.pop(), scope.Stack.pop()
 	ret := scope.Memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
@@ -1469,13 +1409,12 @@ func opReturn(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return ret, nil
 }
 
 func opRevert(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Revert"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	offset, size := scope.Stack.pop(), scope.Stack.pop()
 	ret := scope.Memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
@@ -1485,26 +1424,24 @@ func opRevert(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return ret, nil
 }
 
 func opStop(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Stop"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var endTime = time.Now().UnixNano()
 
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
 func opSuicide(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Suicide"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	beneficiary := scope.Stack.pop()
 	balance := interpreter.evm.StateDB.GetBalance(scope.Contract.Address())
@@ -1519,7 +1456,7 @@ func opSuicide(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
@@ -1529,7 +1466,6 @@ func opSuicide(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 func makeLog(size int) executionFunc {
 	op := fmt.Sprintf("Log%v", size)
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		topics := make([]common.Hash, size)
 		stack := scope.Stack
@@ -1554,7 +1490,7 @@ func makeLog(size int) executionFunc {
 		var dif = endTime - startTime
 		bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-		writeFile(op, int(dif), int(bnum), siz)
+		writeFile(op, int(dif), int(bnum))
 		return nil, nil
 	}
 }
@@ -1562,7 +1498,6 @@ func makeLog(size int) executionFunc {
 // opPush1 is a specialized version of pushN
 func opPush1(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Push1"
-	siz := DirSize()
 	var startTime = time.Now().UnixNano()
 	var (
 		codeLen = uint64(len(scope.Contract.Code))
@@ -1579,7 +1514,7 @@ func opPush1(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 	var dif = endTime - startTime
 	bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-	writeFile(op, int(dif), int(bnum), siz)
+	writeFile(op, int(dif), int(bnum))
 	return nil, nil
 }
 
@@ -1587,7 +1522,6 @@ func opPush1(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]by
 func makePush(size uint64, pushByteSize int) executionFunc {
 	op := fmt.Sprintf("Push%v", size)
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		codeLen := len(scope.Contract.Code)
 
@@ -1611,7 +1545,7 @@ func makePush(size uint64, pushByteSize int) executionFunc {
 		var dif = endTime - startTime
 		bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-		writeFile(op, int(dif), int(bnum), siz)
+		writeFile(op, int(dif), int(bnum))
 		return nil, nil
 	}
 }
@@ -1620,7 +1554,6 @@ func makePush(size uint64, pushByteSize int) executionFunc {
 func makeDup(size int64) executionFunc {
 	op := fmt.Sprintf("Dup%v", size)
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		scope.Stack.dup(int(size))
 		var endTime = time.Now().UnixNano()
@@ -1628,7 +1561,7 @@ func makeDup(size int64) executionFunc {
 		var dif = endTime - startTime
 		bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-		writeFile(op, int(dif), int(bnum), siz)
+		writeFile(op, int(dif), int(bnum))
 		return nil, nil
 	}
 }
@@ -1640,7 +1573,6 @@ func makeSwap(size int64) executionFunc {
 
 	size++
 	return func(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-		siz := DirSize()
 		var startTime = time.Now().UnixNano()
 		scope.Stack.swap(int(size))
 		var endTime = time.Now().UnixNano()
@@ -1648,7 +1580,7 @@ func makeSwap(size int64) executionFunc {
 		var dif = endTime - startTime
 		bnum := interpreter.evm.Context.BlockNumber.Uint64()
 
-		writeFile(op, int(dif), int(bnum), siz)
+		writeFile(op, int(dif), int(bnum))
 		return nil, nil
 	}
 }
