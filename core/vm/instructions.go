@@ -66,7 +66,7 @@ func checkExe() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		pathc := fmt.Sprintf("/home/ubuntu/data-evm/block_data.json")
+		pathc := fmt.Sprintf("/home/ubuntu/data-evm-2/block_data.json")
 
 		f, err := os.OpenFile(pathc, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
@@ -97,7 +97,7 @@ func writeFile(s string, i int, bnum int) {
 		}
 
 		file_num = file_num + 1
-		path := fmt.Sprintf("/home/ubuntu/data-evm/data-1/%v.json", file_num)
+		path := fmt.Sprintf("/home/ubuntu/data-evm-2/data/%v.json", file_num)
 
 		f, _ = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 
