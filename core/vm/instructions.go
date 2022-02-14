@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"bufio"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -52,6 +53,7 @@ var top_num uint64 = 0 // total number of opcode executed in a block
 
 var line_num int = 0 // total number lines in buffer at any time
 //bufferedWriter := bufio.NewWriter(os.Stdout)
+var bufferedWriter *bufio.Writer
 var file_num int = 0
 var f *os.File
 
@@ -66,12 +68,13 @@ func checkExe() {
 		if err != nil {
 			fmt.Println(err)
 		}
-		pathc := fmt.Sprintf("/home/ubuntu/data-evm-2/block_data.json")
+		pathc := fmt.Sprintf("/home/ubuntu/data-evm/block_data.json")
 
 		f, err := os.OpenFile(pathc, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
 			fmt.Println(err)
 		}
+
 
 		if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
 			fmt.Println(err)
@@ -93,13 +96,15 @@ func writeFile(s string, i int, bnum int) {
 
 		if file_num != 0 {
 
+			bufferedWriter.Flush()
 			defer f.Close()
 		}
 
 		file_num = file_num + 1
-		path := fmt.Sprintf("/home/ubuntu/data-evm-2/data/%v.json", file_num)
+		path := fmt.Sprintf("/home/ubuntu/data-evm/data-1/%v.json", file_num)
 
 		f, _ = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		bufferedWriter = bufio.NewWriterSize(bufferedWriter, 10*1024*1024)
 
 	}
 
@@ -109,9 +114,16 @@ func writeFile(s string, i int, bnum int) {
 		fmt.Println(err)
 	}
 
-	if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
+	obj := fmt.Sprintf("%s\n", byteArray)
+
+	_, err = bufferedWriter.WriteString(obj)
+	if err != nil {
 		fmt.Println(err)
 	}
+
+	// if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
+	// 	fmt.Println(err)
+	// }
 
 	line_num = line_num + 1
 
