@@ -17,12 +17,12 @@
 package vm
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-	"bufio"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -75,7 +75,6 @@ func checkExe() {
 			fmt.Println(err)
 		}
 
-
 		if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
 			fmt.Println(err)
 		}
@@ -104,7 +103,7 @@ func writeFile(s string, i int, bnum int) {
 		path := fmt.Sprintf("/home/ubuntu/data-evm/data-1/%v.json", file_num)
 
 		f, _ = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-		bufferedWriter = bufio.NewWriterSize(bufferedWriter, 10*1024*1024)
+		bufferedWriter = bufio.NewWriterSize(f, 10*1024*1024)
 
 	}
 
