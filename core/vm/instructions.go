@@ -70,16 +70,16 @@ func checkExe() {
 		}
 		pathc := fmt.Sprintf("/home/ubuntu/data-evm/block_data.json")
 
-		f, err := os.OpenFile(pathc, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		f1, err := os.OpenFile(pathc, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
+		if _, err := fmt.Fprintf(f1, "%s\n", byteArray); err != nil {
 			fmt.Println(err)
 		}
 
-		defer f.Close()
+		defer f1.Close()
 	}
 }
 
