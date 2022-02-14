@@ -35,6 +35,7 @@ type dataOP struct {
 	O string `json:"o"`
 	E int    `json:"e"`
 	L uint   `json:"l"`
+	T string `json:"t"`
 }
 
 var siz uint = 0
@@ -51,7 +52,8 @@ func writeFile(s string, i int, bnum int) {
 	// m := dt.Minute() / 5
 	path := fmt.Sprintf("/home/ubuntu/data-evm-check/%v.json", bnum)
 
-	tempData := dataOP{B: bnum, O: s, E: i, L: siz}
+	dt := time.Now()
+	tempData := dataOP{B: bnum, O: s, E: i, L: siz, T: dt.String()}
 	byteArray, err := json.Marshal(tempData)
 	if err != nil {
 		fmt.Println(err)
