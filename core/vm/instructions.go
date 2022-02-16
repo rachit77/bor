@@ -77,7 +77,7 @@ func write_block(bn uint64) {
 		}
 
 		byteArray, _ := json.Marshal(ele_map)
-		if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
+		if _, err := fmt.Fprintf(fc, "%s\n", byteArray); err != nil {
 			fmt.Println(err)
 		}
 
@@ -89,7 +89,7 @@ func write_block(bn uint64) {
 		}
 		//write in file for opcode number
 		byteArray, _ = json.Marshal(ele_map_op)
-		if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
+		if _, err := fmt.Fprintf(fc_op, "%s\n", byteArray); err != nil {
 			fmt.Println(err)
 		}
 
