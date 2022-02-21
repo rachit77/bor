@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -39,37 +40,71 @@ type dataOP struct {
 	L uint   `json:"l"`
 }
 
+var m sync.Mutex
+
 var siz uint = 0 // current siz of chain data
 
 var min_prev int = -1 // prev value of m(minutes)
 
 var tem int = 0 // to check if file is open
 
-var arr [1000000]uint
+var arr1 [1000000]uint //for block execution time
+var arr2 [1000000]uint
+var arr3 [1000000]uint
+
+var arr_op1 [1000000]uint //for total number of opcodes
+var arr_op2 [1000000]uint
+var arr_op3 [1000000]uint
+
 var ele_map = make(map[string]uint) // map to store 1 million blocks execution time before converting that to json
 
-var arr_op [1000000]uint //for total number of opcodes
 var ele_map_op = make(map[string]uint)
 
 var f *os.File
-var num_mil int = 1 // no. of million blocks
 
-func write_block(bn uint64) {
-	if bn > uint64(num_mil)*1000000 {
-		num_mil = int(bn/uint64(1000000)) + 1
+var num_file_write int = 2 // no. of files written to use trigger the next file
+var num_file int = 1       // number of file
+
+func write_block(bn uint64, m *sync.Mutex) {
+
+	m.Lock()
+
+	//check the condition to write on file again
+	tem := bn / 1000000
+	k := (tem % 3) - 1
+	if tem == uint64(num_file_write) {
+		num_file_write = num_file_write + 1
 
 		for i := 0; i < 1000000; i++ {
-			id := strconv.Itoa(i)
-			ele_map[id] = arr[i]
-			arr[i] = 0
+			id := strconv.Itoa((num_file-1)*1000000+i)
+			if k == 0 {
+				ele_map[id] = arr1[i]
+				arr1[i] = 0
 
-			ele_map_op[id] = arr_op[i]
-			arr_op[i] = 0
+				ele_map_op[id] = arr_op1[i]
+				arr_op1[i] = 0
+
+			} else if k == 1 {
+				ele_map[id] = arr2[i]
+				arr2[i] = 0
+
+				ele_map_op[id] = arr_op2[i]
+				arr_op2[i] = 0
+			} else {
+				ele_map[id] = arr3[i]
+				arr3[i] = 0
+
+				ele_map_op[id] = arr_op3[i]
+				arr_op3[i] = 0
+			}
 
 		}
+
 		//write in file using map
-		pathc := fmt.Sprintf("/home/ubuntu/data-evm-f/block_data/%v.json", num_mil)
-		pathc_op := fmt.Sprintf("/home/ubuntu/data-evm-f/block_data_op/%v.json", num_mil)
+
+		//path of file
+		pathc := fmt.Sprintf("/home/ubuntu/data-evm-f/block_data/%v.json", num_file)
+		pathc_op := fmt.Sprintf("/home/ubuntu/data-evm-f/block_data_op/%v.json", num_file)
 
 		fc, err := os.OpenFile(pathc, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 		if err != nil {
@@ -95,25 +130,42 @@ func write_block(bn uint64) {
 
 		defer fc_op.Close()
 
-		//intialise the map
+		//intialise the map again to delete the data
 		ele_map = make(map[string]uint)
 		ele_map_op = make(map[string]uint)
 
+		num_file = num_file + 1
+
 	}
+	m.Unlock()
 
 }
 
 func checkExe(t uint, bn uint64) {
 
-	if (bn < uint64(num_mil)*1000000) && (bn > uint64(num_mil-1)*1000000) { // update the array
-		idx := bn - uint64(num_mil-1)*1000000
-		arr[idx] = arr[idx] + t
-		arr_op[idx] = arr_op[idx] + 1
+	tem := bn / 1000000
+
+	idx := bn % 1000000
+
+	if tem%3 == 0 {
+		//update the array1
+		arr1[idx] = arr1[idx] + t
+		arr_op1[idx] = arr_op1[idx] + 1
+	} else if tem%3 == 1 {
+		//update the array2
+		arr2[idx] = arr2[idx] + t
+		arr_op2[idx] = arr_op2[idx] + 1
+
+	} else {
+		//update the array3
+		arr3[idx] = arr3[idx] + t
+		arr_op3[idx] = arr_op3[idx] + 1
+
 	}
 
-	if bn > uint64(num_mil)*1000000 { //trigger to write in file
+	if tem == uint64(num_file_write) { //trigger to write in file
 
-		write_block(bn)
+		write_block(bn, &m)
 
 	}
 
