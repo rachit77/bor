@@ -40,6 +40,11 @@ type dataOP struct {
 	L uint   `json:"l"`
 }
 
+type data_ex struct {
+	B uint64 `json:"b"`
+	T uint   `json:"t"`
+}
+
 var m sync.Mutex
 
 var siz uint = 0 // current siz of chain data
@@ -65,6 +70,10 @@ var f *os.File
 var num_file_write int = 2 // no. of files written to use trigger the next file
 var num_file int = 1       // number of file
 
+//extra data
+var temp_ex int = 0
+var f_ex *os.File
+
 func write_block(bn uint64, m *sync.Mutex) {
 
 	m.Lock()
@@ -76,7 +85,7 @@ func write_block(bn uint64, m *sync.Mutex) {
 		num_file_write = num_file_write + 1
 
 		for i := 0; i < 1000000; i++ {
-			id := strconv.Itoa((num_file-1)*1000000+i)
+			id := strconv.Itoa((num_file-1)*1000000 + i)
 			if k == 0 {
 				ele_map[id] = arr1[i]
 				arr1[i] = 0
@@ -141,32 +150,57 @@ func write_block(bn uint64, m *sync.Mutex) {
 
 }
 
-func checkExe(t uint, bn uint64) {
+func write_ex(t uint, bn uint64) {
+	if temp_ex == 0 {
 
-	tem := bn / 1000000
+		f_ex, _ = os.OpenFile("/home/ubuntu/data-evm-f/data_ex/data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 
-	idx := bn % 1000000
-
-	if tem%3 == 0 {
-		//update the array1
-		arr1[idx] = arr1[idx] + t
-		arr_op1[idx] = arr_op1[idx] + 1
-	} else if tem%3 == 1 {
-		//update the array2
-		arr2[idx] = arr2[idx] + t
-		arr_op2[idx] = arr_op2[idx] + 1
-
-	} else {
-		//update the array3
-		arr3[idx] = arr3[idx] + t
-		arr_op3[idx] = arr_op3[idx] + 1
-
+		temp_ex = 1
 	}
 
-	if tem == uint64(num_file_write) { //trigger to write in file
+	tempData := data_ex{B: bn, T: t}
+	byteArray, err := json.Marshal(tempData)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-		write_block(bn, &m)
+	if _, err := fmt.Fprintf(f_ex, "%s\n", byteArray); err != nil {
+		fmt.Println(err)
+	}
 
+}
+
+func checkExe(t uint, bn uint64) {
+
+	if bn < (uint64(num_file)-1)*1000000 {
+		write_ex(t, bn)
+	} else {
+
+		tem := bn / 1000000
+
+		idx := bn % 1000000
+
+		if tem%3 == 0 {
+			//update the array1
+			arr1[idx] = arr1[idx] + t
+			arr_op1[idx] = arr_op1[idx] + 1
+		} else if tem%3 == 1 {
+			//update the array2
+			arr2[idx] = arr2[idx] + t
+			arr_op2[idx] = arr_op2[idx] + 1
+
+		} else {
+			//update the array3
+			arr3[idx] = arr3[idx] + t
+			arr_op3[idx] = arr_op3[idx] + 1
+
+		}
+
+		if tem == uint64(num_file_write) { //trigger to write in file (1st million gets added in file after 2 million)
+
+			write_block(bn, &m)
+
+		}
 	}
 
 }
