@@ -20,7 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	//"path/filepath"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -35,10 +36,12 @@ type dataOP struct {
 	B int    `json:"b"`
 	O string `json:"o"`
 	E int    `json:"e"`
-	L uint   `json:"l"`
 }
 
-var siz uint = 0 // current siz of chain data
+//	L uint   `json:"l"`
+//}
+
+//var siz uint = 0 // current siz of chain data
 
 var tem int = 0 // to check if file is open
 var f *os.File
@@ -46,22 +49,26 @@ var f *os.File
 // to write atomic evm transactions of pre-selected opcodes
 func writeFile(s string, i int, bnum int) {
 
-	if bnum >= 24903000 && bnum <= 24903500 {
-		if bnum%5 == 0 {
-			siz = DirSize()
-		}
+	//fmt.Print(s)
+	//fmt.Print(i)
+	//fmt.Print(bnum)
+	if bnum == 24904131 {
+		//if bnum%29 == 0 {
+		//	siz = DirSize()
+		//}
 
-		if tem != 0 {
-			f, _ = os.OpenFile("/home/ubuntu/alchemy/data-100/data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+		if tem == 0 {
+			f, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 			tem = 1
 		}
 
-		tempData := dataOP{B: bnum, O: s, E: i, L: siz}
+		tempData := dataOP{B: bnum, O: s, E: i} //, L: siz}
+		//byteArray := []byte(tempData)
 		byteArray, err := json.Marshal(tempData)
 		if err != nil {
 			fmt.Println(err)
 		}
-
+		//fmt.Print(byteArray)
 		if _, err := fmt.Fprintf(f, "%s\n", byteArray); err != nil {
 			fmt.Println(err)
 		}
@@ -69,6 +76,33 @@ func writeFile(s string, i int, bnum int) {
 
 }
 
+var tem_stipend int = 0 // to check if file is open
+var f_stipend *os.File
+
+// to write stipend of call opcodes
+func writeFile_stipend(s string, i int, bnum int) {
+
+	if bnum == 24904131 {
+
+		if tem_stipend == 0 {
+			f_stipend, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/gas_stipend.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_stipend = 1
+		}
+
+		tempData := dataOP{B: bnum, O: s, E: i}
+		byteArray, err := json.Marshal(tempData)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if _, err := fmt.Fprintf(f_stipend, "%s\n", byteArray); err != nil {
+			fmt.Println(err)
+		}
+	}
+
+}
+
+/*
 func DirSize() uint {
 	paths := "/home/ubuntu/alchemy/bor-evm-pruned/chaindata/bor/chaindata"
 	var size uint64
@@ -86,7 +120,7 @@ func DirSize() uint {
 	}
 	t := size / 1048576 // returns size in MiB
 	return uint(t)
-}
+}*/
 
 func opAdd(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	op := "Add"
@@ -1238,7 +1272,7 @@ func opCreate2(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 }
 
 func opCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-	//op := "Call"
+	// op := "Call"
 	//var startTime = time.Now().UnixNano()
 	stack := scope.Stack
 	// Pop gas. The actual gas in interpreter.evm.callGasTemp.
@@ -1256,6 +1290,10 @@ func opCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 	// By using big0 here, we save an alloc for the most common case (non-ether-transferring contract calls),
 	// but it would make more sense to extend the usage of uint256.Int
 	if !value.IsZero() {
+		bnum := interpreter.evm.Context.BlockNumber.Uint64()
+		op := "Call"
+		val_stipend := params.CallStipend
+		writeFile_stipend(op, int(val_stipend), int(bnum))
 		gas += params.CallStipend
 		bigVal = value.ToBig()
 	}
@@ -1300,6 +1338,10 @@ func opCallCode(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	//TODO: use uint256.Int instead of converting with toBig()
 	var bigVal = big0
 	if !value.IsZero() {
+		bnum := interpreter.evm.Context.BlockNumber.Uint64()
+		op := "CallCode"
+		val_stipend := params.CallStipend
+		writeFile_stipend(op, int(val_stipend), int(bnum))
 		gas += params.CallStipend
 		bigVal = value.ToBig()
 	}
@@ -1584,3 +1626,4 @@ func makeSwap(size int64) executionFunc {
 		return nil, nil
 	}
 }
+
