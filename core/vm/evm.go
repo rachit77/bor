@@ -17,7 +17,10 @@
 package vm
 
 import (
+	"encoding/json"
+	"fmt"
 	"math/big"
+	"os"
 	"sync/atomic"
 	"time"
 
@@ -26,6 +29,38 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
 )
+
+type dataPre struct {
+	B int            `json:"b"`
+	G int            `json:"g"`
+	A common.Address `json:"a"`
+}
+
+var tem_pre int = 0 // to check if file is open
+var f_pre *os.File  // file
+
+func writeFile_pre(bnum_pre int, gas_f int, addr common.Address) {
+
+	if bnum_pre == 24904131 {
+
+		if tem_pre == 0 {
+			f_pre, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/data-precompile.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_pre = 1
+		}
+
+		tempData_pre := dataPre{B: bnum_pre, G: gas_f, A: addr}
+
+		byteArray_pre, err := json.Marshal(tempData_pre)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if _, err := fmt.Fprintf(f_pre, "%s\n", byteArray_pre); err != nil {
+			fmt.Println(err)
+		}
+	}
+
+}
 
 // emptyCodeHash is used by create to ensure deployment is disallowed to already
 // deployed contract addresses (relevant after the account abstraction).
@@ -120,11 +155,14 @@ type EVM struct {
 	// available gas is calculated in gasCall* according to the 63/64 rule and later
 	// applied in opCall*.
 	callGasTemp uint64
+
+	Flag int
 }
 
 // NewEVM returns a new EVM. The returned EVM is not thread safe and should
 // only ever be used *once*.
 func NewEVM(blockCtx BlockContext, txCtx TxContext, statedb StateDB, chainConfig *params.ChainConfig, config Config) *EVM {
+
 	evm := &EVM{
 		Context:     blockCtx,
 		TxContext:   txCtx,
@@ -134,6 +172,7 @@ func NewEVM(blockCtx BlockContext, txCtx TxContext, statedb StateDB, chainConfig
 		chainRules:  chainConfig.Rules(blockCtx.BlockNumber),
 	}
 	evm.interpreter = NewEVMInterpreter(evm, config)
+
 	return evm
 }
 
@@ -209,7 +248,15 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	}
 
 	if isPrecompile {
+		gas_i := gas
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
+		gas_f := gas_i - gas
+		bnum_pre := evm.Context.BlockNumber.Uint64()
+		if err == nil {
+			if bnum_pre >= 24904100 && bnum_pre <= 24904250 {
+				writeFile_pre(int(bnum_pre), int(gas_f), addr)
+			}
+		}
 	} else {
 		// Initialise a new contract and set the code that is to be used by the EVM.
 		// The contract is a scoped environment for this execution context only.
@@ -238,6 +285,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		//} else {
 		//	evm.StateDB.DiscardSnapshot(snapshot)
 	}
+
 	return ret, gas, err
 }
 
@@ -275,7 +323,16 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+		gas_i := gas
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
+
+		gas_f := gas_i - gas
+		bnum_pre := evm.Context.BlockNumber.Uint64()
+		if err == nil {
+			if bnum_pre >= 24904100 && bnum_pre <= 24904250 {
+				writeFile_pre(int(bnum_pre), int(gas_f), addr)
+			}
+		}
 	} else {
 		addrCopy := addr
 		// Initialise a new contract and set the code that is to be used by the EVM.
@@ -319,7 +376,16 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 
 	// It is allowed to call precompiles, even via delegatecall
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+		gas_i := gas
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
+
+		gas_f := gas_i - gas
+		bnum_pre := evm.Context.BlockNumber.Uint64()
+		if err == nil {
+			if bnum_pre >= 24904100 && bnum_pre <= 24904250 {
+				writeFile_pre(int(bnum_pre), int(gas_f), addr)
+			}
+		}
 	} else {
 		addrCopy := addr
 		// Initialise a new contract and make initialise the delegate values
@@ -371,7 +437,16 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	}
 
 	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+		gas_i := gas
 		ret, gas, err = RunPrecompiledContract(p, input, gas)
+
+		gas_f := gas_i - gas
+		bnum_pre := evm.Context.BlockNumber.Uint64()
+		if err == nil {
+			if bnum_pre >= 24904100 && bnum_pre <= 24904250 {
+				writeFile_pre(int(bnum_pre), int(gas_f), addr)
+			}
+		}
 	} else {
 		// At this point, we use a copy of address. If we don't, the go compiler will
 		// leak the 'contract' to the outer scope, and make allocation for 'contract'
@@ -520,3 +595,4 @@ func (evm *EVM) Create2(caller ContractRef, code []byte, gas uint64, endowment *
 
 // ChainConfig returns the environment's chain configuration
 func (evm *EVM) ChainConfig() *params.ChainConfig { return evm.chainConfig }
+
