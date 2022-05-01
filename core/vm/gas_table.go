@@ -17,12 +17,47 @@
 package vm
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/params"
 )
+
+type dataOP_gas_table struct {
+	B int    `json:"b"`
+	O string `json:"o"`
+	M int    `json:"m"`
+	C int    `json:"c"`
+}
+
+var tem_gas_table int = 0 // to check if file is open
+var f_gas_table *os.File
+
+func writeFile_gas_table(s string, bnum int, m int, c int) {
+
+	//if bnum >= 24904100 && bnum <= 24904250 {
+	if bnum == 24904131 {
+
+		if tem_gas_table == 0 {
+			f_gas_table, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/data_gas_table.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_gas_table = 1
+		}
+
+		tempData := dataOP_gas_table{B: bnum, O: s, M: m, C: c}
+		byteArray, err := json.Marshal(tempData)
+		if err != nil {
+			fmt.Println(err)
+		}
+		if _, err := fmt.Fprintf(f_gas_table, "%s\n", byteArray); err != nil {
+			fmt.Println(err)
+		}
+	}
+
+}
 
 // memoryGasCost calculates the quadratic gas for memory expansion. It does so
 // only for the memory region that is expanded, not the total memory.
@@ -350,13 +385,19 @@ func gasCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memorySize
 		return 0, ErrGasUintOverflow
 	}
 
+	gas_rec := gas
+
 	evm.callGasTemp, err = callGas(evm.chainRules.IsEIP150, contract.Gas, gas, stack.Back(0))
 	if err != nil {
 		return 0, err
 	}
+	bnum := evm.Context.BlockNumber.Uint64()
+	opcode_name := "CALL"
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
+		writeFile_gas_table(opcode_name, int(bnum), 0, 0)
 		return 0, ErrGasUintOverflow
 	}
+	writeFile_gas_table(opcode_name, int(bnum), int(gas_rec), int(evm.callGasTemp))
 	return gas, nil
 }
 
@@ -375,13 +416,22 @@ func gasCallCode(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memory
 	if gas, overflow = math.SafeAdd(gas, memoryGas); overflow {
 		return 0, ErrGasUintOverflow
 	}
+
+	gas_rec := gas
+
 	evm.callGasTemp, err = callGas(evm.chainRules.IsEIP150, contract.Gas, gas, stack.Back(0))
 	if err != nil {
 		return 0, err
 	}
+
+	bnum := evm.Context.BlockNumber.Uint64()
+	opcode_name := "CALLCODE"
+
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
+		writeFile_gas_table(opcode_name, int(bnum), 0, 0)
 		return 0, ErrGasUintOverflow
 	}
+	writeFile_gas_table(opcode_name, int(bnum), int(gas_rec), int(evm.callGasTemp))
 	return gas, nil
 }
 
@@ -394,10 +444,16 @@ func gasDelegateCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, me
 	if err != nil {
 		return 0, err
 	}
+	gas_rec := gas
+	bnum := evm.Context.BlockNumber.Uint64()
+	opcode_name := "DELEGATECALL"
+
 	var overflow bool
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
+		writeFile_gas_table(opcode_name, int(bnum), 0, 0)
 		return 0, ErrGasUintOverflow
 	}
+	writeFile_gas_table(opcode_name, int(bnum), int(gas_rec), int(evm.callGasTemp))
 	return gas, nil
 }
 
@@ -406,14 +462,21 @@ func gasStaticCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memo
 	if err != nil {
 		return 0, err
 	}
+
+	gas_rec := gas
+	bnum := evm.Context.BlockNumber.Uint64()
+	opcode_name := "STATICCALL"
+
 	evm.callGasTemp, err = callGas(evm.chainRules.IsEIP150, contract.Gas, gas, stack.Back(0))
 	if err != nil {
 		return 0, err
 	}
 	var overflow bool
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
+		writeFile_gas_table(opcode_name, int(bnum), 0, 0)
 		return 0, ErrGasUintOverflow
 	}
+	writeFile_gas_table(opcode_name, int(bnum), int(gas_rec), int(evm.callGasTemp))
 	return gas, nil
 }
 
@@ -439,3 +502,4 @@ func gasSelfdestruct(evm *EVM, contract *Contract, stack *Stack, mem *Memory, me
 	}
 	return gas, nil
 }
+
