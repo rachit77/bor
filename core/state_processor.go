@@ -17,8 +17,10 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -29,6 +31,41 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
 )
+
+type dataBlock struct {
+	B int    `json:"b"`
+	S string `json:"s"`
+	I int    `json:"i"`
+	D int    `json:"d"`
+}
+
+var tem_block int = 0 // to check if file is open
+var f_block *os.File
+
+// to write gas refunds of all transaction
+func writeFile_block(bnum int, s string, i int, d int) {
+
+	//if bnum >= 24904100 && bnum <= 24904250 {
+
+	if bnum == 24904131 {
+
+		if tem_block == 0 {
+			f_block, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/block.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_block = 1
+		}
+
+		tempDataB := dataBlock{B: bnum, S: s, I: i, D: d}
+		byteArray, err := json.Marshal(tempDataB)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if _, err := fmt.Fprintf(f_block, "%s\n", byteArray); err != nil {
+			fmt.Println(err)
+		}
+	}
+
+}
 
 // StateProcessor is a basic Processor, which takes care of transitioning
 // state from one point to another.
@@ -72,6 +109,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	}
 	blockContext := NewEVMBlockContext(header, p.bc, nil)
 	vmenv := vm.NewEVM(blockContext, vm.TxContext{}, statedb, p.config, cfg)
+
+	bnum := block.Number().Uint64()
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
 		msg, err := tx.AsMessage(types.MakeSigner(p.config, header.Number), header.BaseFee)
@@ -79,15 +118,40 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
 		statedb.Prepare(tx.Hash(), i)
+
+		//change the value of pointer
+
+		vmenv.Flag = 1
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
+
+		vmenv.Flag = 0
+		// write receipt gas in file
+		writeFile_block(int(bnum), "trx", i, int(receipt.GasUsed))
+
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 	}
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
+
+	//trx length
+	//trx_len := len(block.Transactions())
+
+	//writeFile_block(int(bnum), "trx length", trx_len)
+
+	//receits lenth
+	//rec_len := len(receipts)
+	//writeFile_block(int(bnum), "receits length", rec_len)
+
+	//gas used
+	//writeFile_block(int(bnum), "gas initial", int(*usedGas))
+
 	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles())
+
+	//gas used
+	//writeFile_block(int(bnum), "gas final", int(*usedGas))
 
 	return receipts, allLogs, *usedGas, nil
 }
@@ -98,6 +162,7 @@ func applyTransaction(msg types.Message, config *params.ChainConfig, bc ChainCon
 	evm.Reset(txContext, statedb)
 
 	// Apply the transaction to the current state (included in the env).
+
 	result, err := ApplyMessage(evm, msg, gp)
 	if err != nil {
 		return nil, err
@@ -151,3 +216,4 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 	vmenv := vm.NewEVM(blockContext, vm.TxContext{}, statedb, config, cfg)
 	return applyTransaction(msg, config, bc, author, gp, statedb, header.Number, header.Hash(), tx, usedGas, vmenv)
 }
+
