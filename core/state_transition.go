@@ -17,9 +17,11 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	cmath "github.com/ethereum/go-ethereum/common/math"
@@ -30,6 +32,74 @@ import (
 )
 
 var emptyCodeHash = crypto.Keccak256Hash(nil)
+
+type dataRefund struct {
+	B int `json:"b"`
+	G int `json:"g"`
+	R int `json:"r"`
+	U int `json:"u"`
+}
+
+var tem_refund int = 0 // to check if file is open
+var f_refund *os.File
+
+// to write gas refunds of all transaction
+func writeFile_refund(bnum int, gas int, refund int, gas_used int) {
+
+	//if bnum >= 24904100 && bnum <= 24904250 {
+
+	if bnum == 24904131 {
+
+		if tem_refund == 0 {
+			f_refund, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/gas_refund1.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_refund = 1
+		}
+
+		tempData := dataRefund{B: bnum, G: gas, R: refund, U: gas_used}
+		byteArray, err := json.Marshal(tempData)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if _, err := fmt.Fprintf(f_refund, "%s\n", byteArray); err != nil {
+			fmt.Println(err)
+		}
+	}
+
+}
+
+type dataIntrinsic struct {
+	B int `json:"b"`
+	I int `json:"i"`
+	T int `json:"t"`
+}
+
+var tem_intrinsic int = 0 // to check if file is open
+var f_intrinsic *os.File
+
+// to write intrisic gas of all transaction
+func writeFile_intrinsic(bnum int, i_gas int, temp int) {
+
+	//if bnum >= 24904100 && bnum <= 24904250 {
+
+	if bnum == 24904131 {
+
+		if tem_intrinsic == 0 {
+			f_intrinsic, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/gas_intrinsic.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_intrinsic = 1
+		}
+
+		tempData := dataIntrinsic{B: bnum, I: i_gas, T: temp}
+		byteArray, err := json.Marshal(tempData)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if _, err := fmt.Fprintf(f_intrinsic, "%s\n", byteArray); err != nil {
+			fmt.Println(err)
+		}
+	}
+}
 
 /*
 The State Transitioning Model
@@ -60,6 +130,7 @@ type StateTransition struct {
 	data       []byte
 	state      vm.StateDB
 	evm        *vm.EVM
+	Flag       int
 }
 
 // Message represents a message sent to a contract.
@@ -157,6 +228,12 @@ func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation b
 
 // NewStateTransition initialises and returns a new state transition object.
 func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition {
+
+	k := 0
+	if evm.Flag == 1 {
+		k = 1
+	}
+
 	return &StateTransition{
 		gp:        gp,
 		evm:       evm,
@@ -167,6 +244,7 @@ func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition 
 		value:     msg.Value(),
 		data:      msg.Data(),
 		state:     evm.StateDB,
+		Flag:      k,
 	}
 }
 
@@ -178,6 +256,10 @@ func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition 
 // indicates a core error meaning that the message would always fail for that particular
 // state and would never be accepted within a block.
 func ApplyMessage(evm *vm.EVM, msg Message, gp *GasPool) (*ExecutionResult, error) {
+	// a5 := 5
+	// anum := evm.Context.BlockNumber.Uint64()
+
+	// writeFile_refund(int(anum), int(a5), int(a5), int(a5))
 	return NewStateTransition(evm, msg, gp).TransitionDb()
 }
 
@@ -299,6 +381,15 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	bnum_intrinsic := st.evm.Context.BlockNumber.Uint64()
+
+	//bigint := big.NewInt(123)
+	if st.Flag == 1 {
+		writeFile_intrinsic(int(bnum_intrinsic), int(gas), 1)
+	} else {
+		writeFile_intrinsic(int(bnum_intrinsic), int(gas), 0)
+	}
+
 	if st.gas < gas {
 		return nil, fmt.Errorf("%w: have %d, want %d", ErrIntrinsicGas, st.gas, gas)
 	}
@@ -325,6 +416,10 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		ret, st.gas, vmerr = st.evm.Call(sender, st.to(), st.data, st.gas, st.value)
 	}
 
+	gas_used_trx := st.initialGas - st.gas
+
+	gas_refund_i := st.gas
+
 	if !london {
 		// Before EIP-3529: refunds were capped to gasUsed / 2
 		st.refundGas(params.RefundQuotient)
@@ -332,6 +427,19 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		// After EIP-3529: refunds are capped to gasUsed / 5
 		st.refundGas(params.RefundQuotientEIP3529)
 	}
+
+	// writeFile_refund(int(bnum_intrinsic), int(gas_used_trx), int(gas_refund_cal), int(gas_used_final))
+
+	gas_refund_cal := st.gas - gas_refund_i
+	gas_used_final := st.gasUsed()
+
+	if st.Flag == 1 {
+		writeFile_refund(int(bnum_intrinsic), int(gas_used_trx), int(gas_refund_cal), int(gas_used_final))
+	}
+	// else {
+	// 	writeFile_refund(int(bnum_intrinsic), int(gas_used_trx), 0, int(gas_used_final))
+	// }
+
 	effectiveTip := st.gasPrice
 	if london {
 		effectiveTip = cmath.BigMin(st.gasTipCap, new(big.Int).Sub(st.gasFeeCap, st.evm.Context.BaseFee))
@@ -361,6 +469,8 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		output2.Add(output2, amount),
 	)
 
+	// gas_refund_cal := st.gas - gas_used_trx
+	// writeFile_refund(int(bnum_intrinsic), int(gas_used_trx), int(gas_refund_cal))
 	return &ExecutionResult{
 		UsedGas:    st.gasUsed(),
 		Err:        vmerr,
@@ -389,3 +499,4 @@ func (st *StateTransition) refundGas(refundQuotient uint64) {
 func (st *StateTransition) gasUsed() uint64 {
 	return st.initialGas - st.gas
 }
+
