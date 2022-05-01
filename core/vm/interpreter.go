@@ -17,13 +17,28 @@
 package vm
 
 import (
+	"encoding/json"
+	"fmt"
 	"hash"
+	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/log"
 )
+
+type dataGAS struct {
+	B int    `json:"b"`
+	O string `json:"o"`
+	S int    `json:"s"`
+	D int    `json:"d"`
+	E int    `json:"e"`
+}
+
+var tem_gas int = 0 // to check if file is open
+var f_gas *os.File  // file
 
 // Config are the configuration options for the Interpreter
 type Config struct {
@@ -64,6 +79,27 @@ type EVMInterpreter struct {
 
 	readOnly   bool   // Whether to throw on stateful modifications
 	returnData []byte // Last CALL's return data for subsequent reuse
+}
+
+func writeFile_gas(s string, bnum int, gas_s int, gas_d int, dif_time int) {
+
+	if bnum == 24904131 {
+		if tem_gas == 0 {
+			f_gas, _ = os.OpenFile("/home/ubuntu/alchemy/data-gas/data-interpreter.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+			tem_gas = 1
+		}
+
+		tempData_gas := dataGAS{B: bnum, O: s, S: gas_s, D: gas_d, E: dif_time}
+
+		byteArray_gas, err := json.Marshal(tempData_gas)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if _, err := fmt.Fprintf(f_gas, "%s\n", byteArray_gas); err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
 // NewEVMInterpreter returns a new instance of the Interpreter.
@@ -217,6 +253,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 		// Static portion of gas
 		cost = operation.constantGas // For tracing
+		gas_s := cost
 		if !contract.UseGas(operation.constantGas) {
 			return nil, ErrOutOfGas
 		}
@@ -240,6 +277,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// Dynamic portion of gas
 		// consume the gas and return an error if not enough gas is available.
 		// cost is explicitly set so that the capture state defer method can get the proper cost
+		gas_d := 0
 		if operation.dynamicGas != nil {
 			var dynamicCost uint64
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
@@ -247,6 +285,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			if err != nil || !contract.UseGas(dynamicCost) {
 				return nil, ErrOutOfGas
 			}
+			gas_d = int(dynamicCost)
 		}
 		if memorySize > 0 {
 			mem.Resize(memorySize)
@@ -258,7 +297,17 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 
 		// execute the operation
+		st_time := time.Now().UnixNano()
 		res, err = operation.execute(&pc, in, callContext)
+		en_time := time.Now().UnixNano()
+		dif_time := en_time - st_time
+		bnum_gas := in.evm.Context.BlockNumber.Uint64()
+
+		//if bnum_gas >= 24904100 && bnum_gas <= 24904250 {
+		if bnum_gas == 24904131 {
+			writeFile_gas(op.String(), int(bnum_gas), int(gas_s), int(gas_d), int(dif_time))
+		}
+
 		// if the operation clears the return data (e.g. it has returning data)
 		// set the last return to the result of the operation.
 		if operation.returns {
@@ -278,3 +327,4 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 	}
 	return nil, nil
 }
+
